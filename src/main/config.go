@@ -18,6 +18,10 @@ type Config struct {
 	kafkaSer string
 
 	collects []tailf.Collect
+
+	etcdenable bool
+	etcdAddr string
+	etcdKey  string
 }
 
 func loadCollectConfig(conf config.Configer) (err error) {
@@ -50,7 +54,7 @@ func loadConfig(confType string,filename string)(err error){
 
 	AppConfig.agentLog = conf.String("logAgent::AgentLog")
 	if len(AppConfig.agentLog) == 0 {
-		AppConfig.agentLog = "./logs"
+		AppConfig.agentLog = "./logs/LogAgent.log"
 	}
 
 	AppConfig.chanSize,err = conf.Int("logAgent::ChanSize")
@@ -68,10 +72,27 @@ func loadConfig(confType string,filename string)(err error){
 	}
 	AppConfig.kafkaSer = fmt.Sprintf("%s:%d",kafkaServer,kafkaPort)
 
-	err = loadCollectConfig(conf)
+	AppConfig.etcdenable,err = conf.Bool("etcd::Enable")
 	if err != nil {
-		fmt.Printf("load collect conf failed, err:%v\n", err)
 		return
+	}
+	if AppConfig.etcdenable {
+		AppConfig.etcdAddr = conf.String("etcd::SerAddr")
+		if len(AppConfig.etcdAddr) == 0 {
+			err = fmt.Errorf("invalid etcd addr")
+			return
+		}
+		AppConfig.etcdKey = conf.String("etcd::ETCDKey")
+		if len(AppConfig.etcdKey) == 0 {
+			err = fmt.Errorf("invalid etcd key")
+			return
+		}
+	} else {
+		err = loadCollectConfig(conf)
+		if err != nil {
+			fmt.Printf("load collect conf failed, err:%v\n", err)
+			return
+		}
 	}
 	return
 }

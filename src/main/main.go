@@ -27,6 +27,20 @@ func main() {
 	}
 	logs.Debug("load conf succ, config:%v", AppConfig)
 
+	//判断是否需要加载etcd
+	if AppConfig.etcdenable {
+		err = initEtcd(AppConfig.etcdAddr)
+		if err != nil {
+			logs.Error("Init ETCD Failed , err: %v",err)
+			return
+		}
+		err = getCollectConfig(AppConfig.etcdKey)
+		if err != nil {
+			logs.Error("Get CollectConfig Failed err: %v" ,err)
+			return
+		}
+	}
+
 	err = tailf.InitTailf(AppConfig.collects,AppConfig.chanSize)
 	if err != nil {
 		logs.Error("Init Tail Failed, err : %v",err)
